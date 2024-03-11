@@ -8,7 +8,7 @@ module driver_selector(
     input [3:0]  mode_select,
     output reg [7:0]  signal 
 );
-    reg [31:0] dirvers_signal;
+    wire [31:0] dirvers_signal;
 
     //implennt the drivers 
     LED_mode1_driver driver1(

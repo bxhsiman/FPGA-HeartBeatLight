@@ -31,6 +31,9 @@ module seg_display (
         else if(value[3:0] == 4'd0 || value[3:0] >= 4'd4) begin
             display_state <= 1'b1;
         end
+        else begin
+            display_state <= 1'b0;
+        end
     end
 
     // Convert 4-bit values to 9-segment display
@@ -39,7 +42,8 @@ module seg_display (
             display_reg <= 8'b0;
         end
         else if(display_state) begin   //display F for warning
-            display_reg[7:4] <= 4'hf; 
+            display_reg[3:0] <= 4'hf;
+            display_reg[7:4] <= value[7:4]; 
         end
         else begin
             display_reg[7:0] <= value[7:0];

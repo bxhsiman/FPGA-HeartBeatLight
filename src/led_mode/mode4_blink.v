@@ -1,7 +1,7 @@
 //爆闪灯驱动
 //create by siman 2024/3/11
 
-module LED_mode4_blink (
+module LED_mode4_driver (
     input clk,
     input rst_n,
     input [7:0] led_select,
