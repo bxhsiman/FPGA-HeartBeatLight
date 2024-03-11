@@ -14,7 +14,6 @@ module driver_selector(
     LED_mode1_driver driver1(
         .clk(clk),
         .rst_n(rst_n),
-        .led_select(led_select),
         .led_out(dirvers_signal[7:0])
     );
     LED_mode2_driver driver2(
@@ -42,16 +41,16 @@ module driver_selector(
         end
         else
             case (mode_select)
-                4'b0000: begin
+                4'b0001: begin
                     signal <= ~dirvers_signal[7:0];
                 end
-                4'b0001: begin
+                4'b0010: begin
                     signal <= ~dirvers_signal[15:8];
                 end
-                4'b0010: begin
+                4'b0011: begin
                     signal <= ~dirvers_signal[23:16];
                 end
-                4'b0011: begin
+                4'b0100: begin
                     signal <= ~dirvers_signal[31:24];
                 end
                 default: begin

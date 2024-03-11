@@ -16,7 +16,7 @@ module led_selector (
         end
         else begin
             counter <= counter + 1;
-            if (counter >= 600) begin //CLK: 600Hz
+            if (counter == 'd600) begin //CLK: 600Hz
                 led_select <= {led_select[6:0],led_select[7]};
                 counter <= 10'd0;
             end

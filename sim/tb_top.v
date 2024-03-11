@@ -34,13 +34,13 @@ module top_tb;
     initial begin
         // 初始化输入
         sw_input = 4'b0000;
-        key_input = 4'b0000;
+        key_input = 4'b1111;
         // 重置
         #100;
-        key_input = 4'b1111; // 模拟按下复位键
+        key_input = 4'b0000; // 模拟按下复位键
         // 等待一段时间后模拟按键和开关操作
         #100;
-        key_input = 4'b0000; // 模拟释放所有键
+        key_input = 4'b1111; // 模拟释放所有键
         #100;
         sw_input = 4'b1000; // 模拟设置开关输入
 
