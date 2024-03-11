@@ -9,11 +9,18 @@ module top (
     wire [3:0] key_reg;
     wire [3:0] sw_input_reg;
     wire clk_divided;
+    wire rst_n;
 
+    //例化复位逻辑
+    rst rst_inst(
+        .key_input(key_input),
+        .rst_n(rst_n)
+    );
+    
     //例化模式输入
     key key_inst(
         .clk(clk),
-        .rst_n(1'b1),
+        .rst_n(rst_n),
         .key_in(key_input),
         .key_out(key_reg)
     );
@@ -26,7 +33,7 @@ module top (
     //例化时钟
     clk_divider clk_divider_inst(
         .clk(clk),
-        .rst_n(1'b1),
+        .rst_n(rst_n),
         .period(sw_input_reg),
         .clk_out(clk_divided)
     );
@@ -35,7 +42,7 @@ module top (
     //例化数码管
     seg_display seg_display_inst(
         .clk(clk),
-        .rst_n(1'b1),
+        .rst_n(rst_n),
         .value({key_reg, sw_input_reg}),
         .seg1(seg1),
         .seg2(seg2)
@@ -46,14 +53,14 @@ module top (
     //例化LED选择状态机
     led_selector led_selector_inst(
         .clk(clk_divided),
-        .rst_n(1'b1),
+        .rst_n(rst_n),
         .led_select(led_select)
     );
 
     //例化驱动器
     driver_selector driver_selector_inst(
         .clk(clk_divided),
-        .rst_n(1'b1),
+        .rst_n(rst_n),
         .led_select(led_select),
         .mode_select(key_reg),
         .signal(led)

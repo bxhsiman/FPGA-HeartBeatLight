@@ -7,9 +7,19 @@ module seg_display (
     output [8:0] seg1,  // 9-segment display for the first digit
     output [8:0] seg2   // 9-segment display for the second digit
 );
+    reg [7:0] value_reg;
+
+    always @(posedge clk or negedge rst_n) begin
+        if(~rst_n)begin
+            value_reg <= 8'hFF;
+        end
+        else begin
+            value_reg <= value;
+        end
+    end
     // 4-bit values for each hex digit
-    wire [3:0] digit1 = value[7:4]; // High nibble
-    wire [3:0] digit2 = value[3:0]; // Low nibble
+    wire [3:0] digit1 = value_reg[7:4]; // High nibble
+    wire [3:0] digit2 = value_reg[3:0]; // Low nibble
 
     // Convert 4-bit values to 9-segment display
     nine_seg_decoder decoder1(.binary_value(digit1), .seg(seg1));

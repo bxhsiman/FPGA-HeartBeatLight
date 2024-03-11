@@ -4,7 +4,7 @@ module clk_divider #(
 (
     input         clk,
     input         rst_n,
-    input [1:0]   period, // 00: 600Hz, 01: 300Hz, 10: 200Hz, 11: 150Hz 
+    input [3:0]   period, // 4'd1: 600Hz, 4d'2: 300Hz, 4d'3: 200Hz, 4d'4: 150Hz 
     output reg    clk_out
 );
     reg [31:0] counter;
@@ -26,29 +26,33 @@ module clk_divider #(
         else begin
             counter <= counter + 1;
             case (period)
-                2'b00: begin
+                4'd1: begin
                     if (counter == period_values[0]) begin
                         counter <= 0;
                         clk_out <= ~clk_out;
                     end
                 end
-                2'b01: begin
+                4'd2: begin
                     if (counter == period_values[1]) begin
                         counter <= 0;
                         clk_out <= ~clk_out;
                     end
                 end
-                2'b10: begin
+                4'd3: begin
                     if (counter == period_values[2]) begin
                         counter <= 0;
                         clk_out <= ~clk_out;
                     end
                 end
-                2'b11: begin
+                4'd4: begin
                     if (counter == period_values[3]) begin
                         counter <= 0;
                         clk_out <= ~clk_out;
                     end
+                end
+                default: begin
+                    counter <= 0;
+                    clk_out <= 0;
                 end
             endcase
         end

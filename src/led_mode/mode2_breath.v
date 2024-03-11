@@ -4,10 +4,10 @@
 module LED_mode2_driver(
     input clk,
     input rst_n,
-    input [3:0] led_select, // 选择哪个LED灯呼吸
+    input [7:0] led_select, // 选择哪个LED灯呼吸
     output reg [7:0] led_out // 8个LED的输出
 );
-    reg [8:0] counter;
+    reg [9:0] counter;
     reg [3:0] brightness;
     wire [7:0] led_mask;
 
@@ -17,7 +17,7 @@ module LED_mode2_driver(
     always @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
             led_out <= 8'b0;
-            counter <= 9'd0;
+            counter <= 10'd0;
             brightness <= 4'd0;
         end
         else begin
