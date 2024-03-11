@@ -8,51 +8,8 @@ module seg_display (
     output [8:0] seg2   // 9-segment display for the second digit
 );
     // 4-bit values for each hex digit
-    reg [7:0] display_reg;
-    // To select if the value is valid
-    reg display_state;
-
-    // Timer for warning [NOT IN USE]
-    reg [32:0] timer;
-    always @(posedge clk or negedge rst_n) begin
-        if(~rst_n) begin
-            timer <= 32'b0;
-        end
-        else if(display_state) begin
-            timer <= timer + 1;
-        end
-    end
-
-    // Warning when the value is 0 or greater than 4
-    always @(posedge clk or negedge rst_n) begin
-        if(~rst_n) begin
-            display_state <= 1'b0;
-        end
-        else if(value[3:0] == 4'd0 || value[3:0] >= 4'd4) begin
-            display_state <= 1'b1;
-        end
-        else begin
-            display_state <= 1'b0;
-        end
-    end
-
-    // Convert 4-bit values to 9-segment display
-    always @(posedge clk or negedge rst_n) begin
-        if(~rst_n) begin
-            display_reg <= 8'b0;
-        end
-        else if(display_state) begin   //display F for warning
-            display_reg[3:0] <= 4'hf;
-            display_reg[7:4] <= value[7:4]; 
-        end
-        else begin
-            display_reg[7:0] <= value[7:0];
-        end
-    end
-
-    // 4-bit values for each hex digit
-    wire [3:0] digit1 = display_reg[7:4]; // High nibble
-    wire [3:0] digit2 = display_reg[3:0]; // Low nibble
+    wire [3:0] digit1 = value[7:4]; // High nibble
+    wire [3:0] digit2 = value[3:0]; // Low nibble
 
     // Convert 4-bit values to 9-segment display
     nine_seg_decoder decoder1(.binary_value(digit1), .seg(seg1));
