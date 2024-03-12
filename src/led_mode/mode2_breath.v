@@ -29,7 +29,7 @@ module LED_mode2_driver(
             end
             else if (counter == 2400) begin
                 counter = 12'd0;
-                current_led = (current_led == 8'd7) ? 8'd0 : (current_led + 1);
+                current_led = current_led + 1;
             end
             else begin
                 // 后300个周期内，LED占空比依次减小

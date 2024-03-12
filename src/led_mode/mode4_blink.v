@@ -4,38 +4,39 @@
 module LED_mode4_driver (
     input clk,
     input rst_n,
-    input [7:0] led_select,
     output reg [7:0] led_out
 );
-    reg [8:0] counter;
+    reg [12:0] counter;
     reg [7:0] led_mask; 
 
     // Generate the mask for the selected LED
     always @(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
-            led_mask <= 8'b0;
+            led_mask = 8'b0;
         end
         else begin
-            if (counter < 300) begin //CLK: 600Hz / 2
-                led_mask <= 8'b1111_0000;
+            if (counter <= 1201) begin //CLK: 2400Hz / 2
+                led_mask = 8'b1111_0000;
             end
             else begin
-                led_mask <= 8'b0000_1111;
+                led_mask = 8'b0000_1111;
             end
         end
     end
 
     always @(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
-            led_out <= 8'b0;
-            counter <= 9'd0;
+            led_out = 8'b0;
+            counter = 12'd0;
         end
         else begin
-            counter <= counter + 1;
-            if (counter == 200) begin //CLK: 600Hz / 3
+            counter = counter + 1;
+            if (counter % 200 == 0) begin //CLK: 1200Hz / 6
                 // Toggle the selected LED
-                led_out <= (led_out & ~led_mask) | ((~led_out) & led_mask);
-                counter <= 9'd0;
+                led_out = led_out ^ led_mask;
+            end
+            if (counter == 2400) begin
+                counter = 12'd0;
             end
         end
     end 

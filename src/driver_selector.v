@@ -24,13 +24,11 @@ module driver_selector(
     LED_mode3_driver driver3(
         .clk(clk),
         .rst_n(rst_n),
-        .led_select(led_select),
         .led_out(dirvers_signal[23:16])
     );
     LED_mode4_driver driver4(
         .clk(clk),
         .rst_n(rst_n),
-        .led_select(led_select),
         .led_out(dirvers_signal[31:24])
     );
 

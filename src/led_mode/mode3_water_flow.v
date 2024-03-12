@@ -4,63 +4,60 @@
 module LED_mode3_driver(
     input clk,
     input rst_n,
-    input [7:0] led_select,
     output reg [7:0] led_out
 );
 
+// counter
+reg [11:0] counter = 0;
+
 // PWM parameters
-localparam MAX_PWM_COUNT = 600; // define the maximum PWM count
-reg [9:0] pwm_counter[7:0];     // define PWM counter for each LED
-reg [9:0] pwm_duty[7:0];        // define PWM duty for each LED
+reg [11:0] pwm_counter[7:0];     // define PWM counter for each LED
+reg [11:0] pwm_duty[7:0];        // define PWM duty for each LED
 
-// PWM counter and duty update
+// LED selector
+reg [2:0] current_led; // define the LED selector
+
 integer i;
-always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-        for (i = 0; i < 8; i = i + 1) begin
-            pwm_counter[i] <= 0;
-            led_out[i] <= 0;
-        end
-    end else begin
-        // PWM counter update
-        for (i = 0; i < 8; i = i + 1) begin
-            if (pwm_counter[i] >= MAX_PWM_COUNT)
-                pwm_counter[i] <= 0;
-            else
-                pwm_counter[i] <= pwm_counter[i] + 1;
 
-            // update led state
-            if (pwm_counter[i] < pwm_duty[i])
-                led_out[i] <= 1;
-            else
-                led_out[i] <= 0;
-        end
+always @(posedge clk or negedge rst_n) begin
+    if(~rst_n)begin
+        current_led <= 3'd0;
     end
-end
-
-// update duty
-always @(posedge clk or negedge rst_n) begin
-    if(~rst_n) begin
-        for (i = 0; i < 8; i = i + 1) begin
-            pwm_duty[i] <= 8'd0;
-        end
+    else if(counter < 2400) begin
+        counter <= counter + 1;
     end
     else begin
-        // reset pwm_duty
-        for (i = 0; i < 8; i = i + 1) begin
-            pwm_duty[i] <= 8'd0;
-        end
-
-        // set different duty for different LED
-        for (i = 0; i < 8; i = i + 1) begin
-            if (led_select[i] == 1'b1) begin
-                pwm_duty[i] <= 10'd600;
-                pwm_duty[(i + 7) % 8] <= 10'd450; // 75%亮度
-                pwm_duty[(i + 6) % 8] <= 10'd300; // 50%亮度
-                pwm_duty[(i + 5) % 8] <= 10'd150; // 25%亮度
-            end
+        counter <= 12'd0;
+        current_led <= current_led - 1;
+        pwm_duty[current_led - 1] <= 12'd2400;
+        for(i = 0; i < 4; i++) begin
+            if(pwm_duty[current_led + i] >= 60) pwm_duty[current_led + i] <= pwm_duty[current_led + i] - 60;
         end
     end
 end
 
+always @(posedge clk or negedge rst_n) begin
+    if(~rst_n)begin
+        for(i = 0; i < 7; i++) begin
+            pwm_counter[i] <= 12'd0;
+        end
+        led_out <= 8'b0000_0000;
+    end
+    else begin
+        for(i = 0; i < 7; i++) begin
+            led_out[i] <= (pwm_counter[i] < pwm_duty[i]) ? 1'd0 : 1'd1;
+            pwm_counter[i] <= (pwm_counter[i] >= 12'd2400) ? 12'd0 : (pwm_counter[i] + 1);
+        end
+        
+    end
+end
+
+
+
+
+
+
+
+
 endmodule
+
