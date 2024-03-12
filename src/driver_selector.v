@@ -19,7 +19,6 @@ module driver_selector(
     LED_mode2_driver driver2(
         .clk(clk),
         .rst_n(rst_n),
-        .led_select(led_select),
         .led_out(dirvers_signal[15:8])
     );
     LED_mode3_driver driver3(
