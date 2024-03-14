@@ -1,7 +1,11 @@
 //呼吸灯驱动
 //create by siman 2024/3/11
 
-module LED_mode2_driver(
+module LED_mode2_driver
+#(
+    parameter PERIOD = 2400  //1s BASE PERIOD
+)
+(
     input clk,
     input rst_n,
     output reg [7:0] led_out // 8个LED的输出
@@ -20,24 +24,39 @@ module LED_mode2_driver(
             current_led = 8'd0;
         end
         else begin
-            if (counter < 1200) begin
+            if (counter <= PERIOD / 4) begin
                 // 前300个周期内，LED占空比依次增加
                 counter = counter + 1;
-                if(counter % 40 == 0) begin
+                if(counter % 60 == 0) begin
                     duty = duty + 1;
                 end
             end
-            else if (counter == 2400) begin
-                counter = 12'd0;
-                current_led = current_led + 1;
-            end
-            else begin
+            else if (counter > PERIOD / 4 && counter <= PERIOD / 2) begin
                 // 后300个周期内，LED占空比依次减小
                 counter = counter + 1;
-                if(counter % 40 == 0) begin
+                if(counter % 60 == 0) begin
                     duty = duty - 1;
                 end
             end
+            else if (counter > PERIOD / 2 && counter <= PERIOD / 4 * 3) begin
+                // 前300个周期内，LED占空比依次增加
+                counter = counter + 1;
+                if(counter % 60 == 0) begin
+                    duty = duty + 1;
+                end
+            end
+            else if (counter > PERIOD / 4 * 3 && counter < PERIOD) begin
+                // 前300个周期内，LED占空比依次增加
+                counter = counter + 1;
+                if(counter % 60 == 0) begin
+                    duty = duty - 1;
+                end
+            end
+            else if (counter == PERIOD) begin
+                counter = 12'd0;
+                current_led = current_led + 1;
+            end
+
         end
     end
 
@@ -46,12 +65,9 @@ module LED_mode2_driver(
             led_out = 8'b0000_0000;
             duty_counter = 8'd0;
         end
-        else if(duty_counter < 5)begin
-            duty_counter = duty_counter + 1;
-            led_out = (duty_counter <= duty) ? (1 << current_led) : (8'b0000_0000); 
-        end
         else begin
-            duty_counter = 8'd0;
+            duty_counter = duty_counter >= 5 ? 0 : duty_counter + 1;
+            led_out = (duty_counter <= duty) ? (1 << current_led) : (8'b0000_0000); 
         end
     end
 endmodule
