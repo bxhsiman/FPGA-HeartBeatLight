@@ -22,12 +22,12 @@ always @(posedge clk or negedge rst_n) begin
     else begin
         if (counter >= 300) begin
             counter <= 0;
-            current_led <= (current_led + 1) % 8; // 循环移动LED指示灯
+            current_led <= (current_led - 1) % 8; // 循环移动LED指示灯
             pwm_duty[current_led] <= 8; 
-            pwm_duty[(current_led - 1) % 8] <= pwm_duty[(current_led - 1) % 8] >= 2 ? pwm_duty[(current_led - 1) % 8] - 2 : 0;
-            pwm_duty[(current_led - 2) % 8] <= pwm_duty[(current_led - 2) % 8] >= 2 ? pwm_duty[(current_led - 2) % 8] - 2 : 0;
-            pwm_duty[(current_led - 3) % 8] <= pwm_duty[(current_led - 3) % 8] >= 2 ? pwm_duty[(current_led - 3) % 8] - 2 : 0;
-            pwm_duty[(current_led - 4) % 8] <= pwm_duty[(current_led - 4) % 8] >= 2 ? pwm_duty[(current_led - 4) % 8] - 2 : 0;
+            pwm_duty[(current_led + 1) % 8] <= pwm_duty[(current_led + 1) % 8] >= 2 ? pwm_duty[(current_led + 1) % 8] - 2 : 0;
+            pwm_duty[(current_led + 2) % 8] <= pwm_duty[(current_led + 2) % 8] >= 2 ? pwm_duty[(current_led + 2) % 8] - 2 : 0;
+            pwm_duty[(current_led + 3) % 8] <= pwm_duty[(current_led + 3) % 8] >= 2 ? pwm_duty[(current_led + 3) % 8] - 2 : 0;
+            pwm_duty[(current_led + 4) % 8] <= pwm_duty[(current_led + 4) % 8] >= 2 ? pwm_duty[(current_led + 4) % 8] - 2 : 0;
         end
         else begin
             counter <= counter + 1;
