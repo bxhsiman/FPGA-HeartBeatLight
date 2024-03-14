@@ -34,7 +34,7 @@ module LED_mode1_driver
                 led_out <= 1 << current_led;
                 counter <= counter + 1;
             end
-            else if (counter >= PERIOD / 2 && counter < PERIOD / 4 * 3) begin
+            else if (counter >= PERIOD / 4 * 3 && counter < PERIOD) begin
                 led_out <= 8'b0000_0000;
                 counter <= counter + 1;
             end
