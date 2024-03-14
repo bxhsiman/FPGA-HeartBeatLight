@@ -34,7 +34,7 @@ module mode3_tb;
         rst_n = 1;
         #100;
 
-        #1000000;
+        #100000000;
         $finish;
     end
 
