@@ -1,0 +1,12 @@
+/*
+
+!/doc
+!/sim/*.vcd
+!/sim/*.v
+!/src
+!/readme.md
+!*.v
+!*.md
+!*.png
+!.gitignore
+
