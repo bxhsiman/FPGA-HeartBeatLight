@@ -3,7 +3,7 @@ module LED_mode3_driver(
     input rst_n,
     output reg [7:0] led_out
 );
-// PWM PERIOD == 10
+
 reg [11:0] counter = 0;
 reg [11:0] pwm_counter[7:0];
 reg [11:0] pwm_duty[7:0];
@@ -22,7 +22,7 @@ always @(posedge clk or negedge rst_n) begin
     else begin
         if (counter >= 300) begin
             counter <= 0;
-            current_led <= (current_led - 1) % 8; // 循环移动LED指示灯
+            current_led <= (current_led - 1) % 8; // change to next led
             pwm_duty[current_led] <= 8; 
             pwm_duty[(current_led + 1) % 8] <= pwm_duty[(current_led + 1) % 8] >= 2 ? pwm_duty[(current_led + 1) % 8] - 2 : 0;
             pwm_duty[(current_led + 2) % 8] <= pwm_duty[(current_led + 2) % 8] >= 2 ? pwm_duty[(current_led + 2) % 8] - 2 : 0;
@@ -35,7 +35,7 @@ always @(posedge clk or negedge rst_n) begin
     end
 end
 
-// 输出PWM
+// PWM OUTPUT
 always @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
         for (i = 0; i < 8; i++) begin

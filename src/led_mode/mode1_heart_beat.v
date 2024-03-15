@@ -16,10 +16,9 @@ module LED_mode1_driver
 
     always @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
-            // 异步复位
             counter <= 10'd0;
             current_led <= 8'd0;
-            led_out <= 8'b0000_0000; // 初始化时所有LED熄灭
+            led_out <= 8'b0000_0000; 
         end
         else begin
             if (counter < PERIOD / 4) begin
@@ -42,7 +41,6 @@ module LED_mode1_driver
                 counter <= 10'd0;
                 current_led <= current_led + 1;
                 if (current_led >= 7) begin
-                    // 确保current_led循环回0
                     current_led <= 8'd0;
                 end
             end

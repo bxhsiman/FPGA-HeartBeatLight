@@ -1,4 +1,5 @@
-module clk_divider #(
+module clk_divider 
+#(
    parameter   clk_freq = 12_000_000 // 12MHz
 ) 
 (

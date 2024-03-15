@@ -48,20 +48,10 @@ module top (
         .seg2(seg2)
     );
 
-    wire [7:0] led_select;
-
-    //例化LED选择状态机
-    led_selector led_selector_inst(
-        .clk(clk_divided),
-        .rst_n(rst_n),
-        .led_select(led_select)
-    );
-
     //例化驱动器
     driver_selector driver_selector_inst(
         .clk(clk_divided),
         .rst_n(rst_n),
-        .led_select(led_select),
         .mode_select(key_reg),
         .signal(led)
     );

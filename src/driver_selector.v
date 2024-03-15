@@ -4,8 +4,7 @@
 module driver_selector(
     input clk,
     input rst_n,
-    input [7:0]  led_select,
-    input [3:0]  mode_select,
+    input [3:0]  mode_select, // 4'b0001: Mode1, 4'b0010: Mode2, 4'b0011: Mode3, 4'b0100: Mode4
     output reg [7:0]  signal 
 );
     wire [31:0] dirvers_signal;
