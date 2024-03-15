@@ -781,7 +781,7 @@ Design Summary
 整体资源占用情况良好，仍有较大余量。
 
 ## 演示视频
-TBD
+[Bilibili](https://www.bilibili.com/video/BV1rj421o7tM/?spm_id_from=333.1007.top_right_bar_window_history.content.click&vd_source=0568b29f4589991b763a5dabb8651c1e)
 
 ## 代码源文件
 [Github](https://github.com/bxhsiman/FPGA-HeartBeatLight)
