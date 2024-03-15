@@ -11,26 +11,26 @@ module top (
     wire clk_divided;
     wire rst_n;
 
-    //例化复位逻辑
+    // instantiate the reset module
     rst rst_inst(
         .key_input(key_input),
         .rst_n(rst_n)
     );
     
-    //例化模式输入
+    // instantiate the key module
     key key_inst(
         .clk(clk),
         .rst_n(rst_n),
         .key_in(key_input),
         .key_out(key_reg)
     );
-    //周期输入
+    // instantiate the switch module
     sw sw_inst(
         .sw_i(sw_input),
         .sw_o(sw_input_reg)
     );
 
-    //例化时钟
+    // instantiate the clock divider module
     clk_divider clk_divider_inst(
         .clk(clk),
         .rst_n(rst_n),
@@ -39,7 +39,7 @@ module top (
     );
 
 
-    //例化数码管
+    // instantiate the segment display module 
     seg_display seg_display_inst(
         .clk(clk),
         .rst_n(rst_n),
@@ -48,7 +48,7 @@ module top (
         .seg2(seg2)
     );
 
-    //例化驱动器
+    // instantiate the driver selector module
     driver_selector driver_selector_inst(
         .clk(clk_divided),
         .rst_n(rst_n),
