@@ -1,8 +1,6 @@
 /*
-
 !/doc
-!/sim/*.vcd
-!/sim/*.v
+!/sim/
 !/src
 !/readme.md
 !*.v
