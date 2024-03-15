@@ -75,16 +75,70 @@ top.v [顶层模块]
    |---seg.v [数码管译码器]
 ```
 ### `clk_divider.v` 时钟分频器 
-#### 输入：
+#### 代码内容
 ``` v
-   parameter     clk_freq = 12_000_000 // 12MHz
-   input         clk,
-   input         rst_n,
-   input [3:0]   period // 4'd1: 2400Hz, 4'd2: 1200Hz, 4'd3:800Hz, 4'd4: 600Hz 
-```
-#### 输出：
-``` v
-   output reg    clk_out
+module clk_divider 
+#(
+   parameter   clk_freq = 12_000_000 // 12MHz
+) 
+(
+    input         clk,
+    input         rst_n,
+    input [3:0]   period, // 4'd1: 2400Hz, 4d'2: 1200Hz, 4d'3: 800Hz, 4d'4: 600Hz 
+    output reg    clk_out
+);
+    reg [31:0] counter;
+    reg [31:0] period_values [3:0];
+
+    // Initialize period values
+    initial begin
+        period_values[0] = clk_freq / 2400 / 2;
+        period_values[1] = clk_freq / 1200 / 2;
+        period_values[2] = clk_freq / 800 / 2;
+        period_values[3] = clk_freq / 600 / 2;
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            counter <= 0;
+            clk_out <= 0;
+        end
+        else begin
+            counter <= counter + 1;
+            case (period)
+                4'd1: begin
+                    if (counter == period_values[0]) begin
+                        counter <= 0;
+                        clk_out <= ~clk_out;
+                    end
+                end
+                4'd2: begin
+                    if (counter == period_values[1]) begin
+                        counter <= 0;
+                        clk_out <= ~clk_out;
+                    end
+                end
+                4'd3: begin
+                    if (counter == period_values[2]) begin
+                        counter <= 0;
+                        clk_out <= ~clk_out;
+                    end
+                end
+                4'd4: begin
+                    if (counter == period_values[3]) begin
+                        counter <= 0;
+                        clk_out <= ~clk_out;
+                    end
+                end
+                default: begin
+                    counter <= 0;
+                    clk_out <= 0;
+                end
+            endcase
+        end
+    end
+endmodule
+
 ```
 本模块`initial`块中进行了频率对应计数值的计算，随后当`clk计数器`达到计数值时反转电平。通过输入的`period`选择对应频率的计数值。
 #### 仿真结果：
@@ -94,15 +148,66 @@ top.v [顶层模块]
 
 ---
 ### `driver_selector.v` 驱动选择器
-#### 输入：
+#### 代码内容：
 ``` v   
-   input clk,
-   input rst_n,
-   input [3:0]  mode_select
-```
-#### 输出：
-``` v
-   output reg [7:0]  signal 
+//闪灯模式选择器
+//create by siman 2024/3/11
+
+module driver_selector(
+    input clk,
+    input rst_n,
+    input [3:0]  mode_select, // 4'b0001: Mode1, 4'b0010: Mode2, 4'b0011: Mode3, 4'b0100: Mode4
+    output reg [7:0]  signal 
+);
+    wire [31:0] dirvers_signal;
+
+    //implennt the drivers 
+    LED_mode1_driver driver1(
+        .clk(clk),
+        .rst_n(rst_n),
+        .led_out(dirvers_signal[7:0])
+    );
+    LED_mode2_driver driver2(
+        .clk(clk),
+        .rst_n(rst_n),
+        .led_out(dirvers_signal[15:8])
+    );
+    LED_mode3_driver driver3(
+        .clk(clk),
+        .rst_n(rst_n),
+        .led_out(dirvers_signal[23:16])
+    );
+    LED_mode4_driver driver4(
+        .clk(clk),
+        .rst_n(rst_n),
+        .led_out(dirvers_signal[31:24])
+    );
+
+    always @(posedge clk or negedge rst_n) begin
+        if(~rst_n)begin
+            signal <= 8'b1111_1111;
+        end
+        else
+            case (mode_select)
+                4'b0001: begin
+                    signal <= ~dirvers_signal[7:0];
+                end
+                4'b0010: begin
+                    signal <= ~dirvers_signal[15:8];
+                end
+                4'b0011: begin
+                    signal <= ~dirvers_signal[23:16];
+                end
+                4'b0100: begin
+                    signal <= ~dirvers_signal[31:24];
+                end
+                default: begin
+                    signal <= 8'b1111_1111;
+                end
+            endcase
+    end
+
+endmodule   
 ```
 本模块中例化全部驱动，根据`mode_select`的值选择对应例化mode的信号进行输出。
 #### 仿真结果：
@@ -128,15 +233,57 @@ top.v [顶层模块]
 
 ---
 ### `key.v` 按键开关译码器
-#### 输入：
+#### 代码说明：
 ``` v
-   input clk,
-   input rst_n,
-   input [3:0] key_in
-```
-#### 输出：
-``` v
-   output reg [3:0] key_out
+//按钮锁存模块
+//created by siman 2024/3/11
+
+module key (
+    input clk,
+    input rst_n,
+    input [3:0] key_in,
+    output reg [3:0] key_out
+);
+    reg [3:0] last_valid_value;
+    
+    initial begin
+        last_valid_value = 4'b0001;
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            key_out <= 4'b0001; // default value
+            last_valid_value <= 4'b0001; 
+        end
+        else begin
+            case (~key_in) 
+                4'b0001: begin 
+                    key_out <= 4'b0001;
+                    last_valid_value <= 4'b0001;
+                end
+                4'b0010: begin 
+                    key_out <= 4'b0010;
+                    last_valid_value <= 4'b0010;
+                end
+                4'b0100: begin 
+                    key_out <= 4'b0011;
+                    last_valid_value <= 4'b0011;
+                end
+                4'b1000: begin 
+                    key_out <= 4'b0100;
+                    last_valid_value <= 4'b0100;
+                end
+                4'b0000: begin // keep the last valid value
+                    key_out <= last_valid_value;
+                end
+                default: begin // if input is invalid, display F
+                    key_out <= 4'b1111; // 显示F
+                end
+            endcase
+        end
+    end
+
+endmodule
 ```
 本模块创建了一个寄存器，`key_in`值输入非全0时更新`key_out`的值，实现锁存功能
 #### 仿真结果：
@@ -146,14 +293,27 @@ top.v [顶层模块]
 
 ---
 ### `sw.v` 拨码开关译码器
-#### 输入：
+#### 代码内容：
 ``` v
-   input [3:0] sw_i,
+//拨码开关译码模块
+// created by siman 2024/3/12
+module sw(
+    input [3:0] sw_i,
+    output reg [3:0] sw_o
+);
 
-```
-#### 输出：
-``` v
-   output reg [3:0] sw_o
+    always @(*) begin
+        case (sw_i)
+            4'b0001: sw_o = 4'b0001; 
+            4'b0010: sw_o = 4'b0010; 
+            4'b0100: sw_o = 4'b0011; 
+            4'b1000: sw_o = 4'b0100; 
+            default: sw_o = 4'b1111; // if input is invalid, display F
+        endcase
+    end
+
+endmodule
+
 ```
 本模块将输入信号译码，输出为0-4的值。(seg译码器接受正常二进制，本任务`sw_i`并不是按照正常二进制表示的数字)
 #### 仿真结果：
@@ -164,13 +324,19 @@ top.v [顶层模块]
 ---
 
 ### `rst.v` 复位
-#### 输入：
+#### 代码内容：
 ``` v
-   input [3:0] key_input,
-```
-#### 输出：
-``` v
-   output rst_n
+//复位逻辑
+//created by siman 2024/3/12
+
+module rst(
+    input [3:0] key_input,
+    output rst_n
+);
+
+assign rst_n = (key_input == 4'b0000) ? 1'b0 : 1'b1;
+
+endmodule
 ```
 本模块实现了一个4bit查找表，仅输入`4'b0000`时~rst有效。
 #### 仿真结果：
@@ -180,16 +346,67 @@ top.v [顶层模块]
 
 ---
 ### `seg.v` 数码管译码器
-#### 输入：
+#### 代码内容：
 ``` v
-   input clk,
-   input rst_n,
-   input [7:0] value,  // 8-bit input value (0-255) 
-```
-#### 输出：
-``` v
-   output [8:0] seg1,  // 9-segment display for the first digit
-   output [8:0] seg2   // 9-segment display for the second digit
+   //段码屏译码模块
+//by ChatGpt 2024/2/06
+module seg_display (
+    input clk,
+    input rst_n,
+    input [7:0] value,  // 8-bit input value (0-255) 
+    output [8:0] seg1,  // 9-segment display for the first digit
+    output [8:0] seg2   // 9-segment display for the second digit
+);
+    reg [7:0] value_reg;
+
+    always @(posedge clk or negedge rst_n) begin
+        if(~rst_n)begin
+            value_reg <= 8'hFF;
+        end
+        else begin
+            value_reg <= value;
+        end
+    end
+    // 4-bit values for each hex digit
+    wire [3:0] digit1 = value_reg[7:4]; // High nibble
+    wire [3:0] digit2 = value_reg[3:0]; // Low nibble
+
+    // Convert 4-bit values to 9-segment display
+    nine_seg_decoder decoder1(.binary_value(digit1), .seg(seg1));
+    nine_seg_decoder decoder2(.binary_value(digit2), .seg(seg2));
+
+endmodule
+
+// Module to convert 4-bit binary to 9-segment display
+module nine_seg_decoder (
+    input [3:0] binary_value,
+    output reg [8:0] seg
+);
+
+    // Convert binary to 9-segment (assuming common anode display)
+    always @(binary_value) begin
+        case (binary_value)
+            4'h0: seg = 9'b111111000; // 0
+            4'h1: seg = 9'b011000000; // 1
+            4'h2: seg = 9'b110110100; // 2
+            4'h3: seg = 9'b111100100; // 3
+            4'h4: seg = 9'b011001100; // 4
+            4'h5: seg = 9'b101101100; // 5
+            4'h6: seg = 9'b101111100; // 6
+            4'h7: seg = 9'b111000000; // 7
+            4'h8: seg = 9'b111111100; // 8
+            4'h9: seg = 9'b111101100; // 9
+            4'hA: seg = 9'b111011100; // A
+            4'hB: seg = 9'b001111100; // b
+            4'hC: seg = 9'b100111000; // C
+            4'hD: seg = 9'b011110100; // d
+            4'hE: seg = 9'b100111100; // E
+            4'hF: seg = 9'b100011100; // F
+            default: seg = 9'b000000001; // Blank display for undefined values
+        endcase
+    end
+endmodule
+
 ```
 本模块将输入信号译码，分别显示到两个段码屏上。
 
@@ -200,15 +417,58 @@ top.v [顶层模块]
 
 ---
 ### `mode1_heart_beat.v` 心跳灯
-#### 输入：
+#### 代码内容：
 ``` v
+    //心跳灯驱动
+// Created by siman 2024/3/11
+
+module LED_mode1_driver 
+#(
     parameter PERIOD = 2400  //1s BASE PERIOD
+) 
+(
     input clk,
-    input rst_n
-```
-#### 输出：
-``` v
-   output reg [7:0] led_out
+    input rst_n,
+    output reg [7:0] led_out
+);
+
+    reg [11:0] counter = 0; 
+    reg [2:0] current_led = 0;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            counter <= 10'd0;
+            current_led <= 8'd0;
+            led_out <= 8'b0000_0000; 
+        end
+        else begin
+            if (counter < PERIOD / 4) begin
+                led_out <= 1 << current_led;
+                counter <= counter + 1;
+            end
+            else if (counter >= PERIOD / 4 && counter < PERIOD / 2) begin
+                led_out <= 8'b0000_0000;
+                counter <= counter + 1;
+            end
+            else if (counter >= PERIOD / 2 && counter < PERIOD / 4 * 3) begin
+                led_out <= 1 << current_led;
+                counter <= counter + 1;
+            end
+            else if (counter >= PERIOD / 4 * 3 && counter < PERIOD) begin
+                led_out <= 8'b0000_0000;
+                counter <= counter + 1;
+            end
+            else begin
+                counter <= 10'd0;
+                current_led <= current_led + 1;
+                if (current_led >= 7) begin
+                    current_led <= 8'd0;
+                end
+            end
+        end
+    end
+endmodule
+
 ```
 本模块中创建了一个计数器，当计数值每达到1/4周期时，将改变电平，完成在一个周期闪烁两次的任务。当计数器达到1周期时，将进行灯的切换。
 
@@ -218,15 +478,80 @@ top.v [顶层模块]
 
 ---
 ### `mode2_breath.v` 呼吸灯
-#### 输入：
+#### 代码内容：
 ``` v
+    //呼吸灯驱动
+//create by siman 2024/3/11
+
+module LED_mode2_driver
+#(
     parameter PERIOD = 2400  //1s BASE PERIOD
+)
+(
     input clk,
-    input rst_n
-```
-#### 输出：
-``` v
-   output reg [7:0] led_out
+    input rst_n,
+    output reg [7:0] led_out
+);
+    reg [11:0] counter = 0; 
+    reg [2:0] current_led = 0; 
+    
+    reg [11:0] duty;
+    reg [11:0] duty_counter; 
+
+    always @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            duty = 12'd0;
+            counter = 12'd0;
+            current_led = 8'd0;
+        end
+        else begin
+            if (counter <= PERIOD / 4) begin
+                // First PERIOD / 4 cycles, the LED duty cycle increases
+                counter = counter + 1;
+                if(counter % 60 == 0) begin
+                    duty = duty + 1;
+                end
+            end
+            else if (counter > PERIOD / 4 && counter <= PERIOD / 2) begin
+                // The next PERIOD / 4 cycles, the LED duty cycle decreases
+                counter = counter + 1;
+                if(counter % 60 == 0) begin
+                    duty = duty - 1;
+                end
+            end
+            else if (counter > PERIOD / 2 && counter <= PERIOD / 4 * 3) begin
+                // The next PERIOD / 4 cycles, the LED duty cycle increases
+                counter = counter + 1;
+                if(counter % 60 == 0) begin
+                    duty = duty + 1;
+                end
+            end
+            else if (counter > PERIOD / 4 * 3 && counter < PERIOD) begin
+                // The next PERIOD / 4 cycles, the LED duty cycle decreases
+                counter = counter + 1;
+                if(counter % 60 == 0) begin
+                    duty = duty - 1;
+                end
+            end
+            else if (counter == PERIOD) begin
+                counter = 12'd0;
+                current_led = current_led + 1;
+            end
+
+        end
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if(~rst_n)begin
+            led_out = 8'b0000_0000;
+            duty_counter = 8'd0;
+        end
+        else begin
+            duty_counter = duty_counter >= 5 ? 0 : duty_counter + 1;
+            led_out = (duty_counter <= duty) ? (1 << current_led) : (8'b0000_0000); 
+        end
+    end
+endmodule
 ```
 本模块中创建了一个计数器，一个pwm发生器，当计数值每达到1/4周期时，将改变pwm发生器的duty变化方向，实现由亮到暗再由暗到亮。当计数器达到1周期时，将切换接入到pwm发生器的led，完成灯的切换。
 
@@ -242,14 +567,62 @@ top.v [顶层模块]
 
 ---
 ### `mode3_water_flow.v` 流水灯
-#### 输入：
+#### 代码内容：
 ``` v
+   module LED_mode3_driver(
     input clk,
-    input rst_n
-```
-#### 输出：
-``` v
-   output reg [7:0] led_out
+    input rst_n,
+    output reg [7:0] led_out
+);
+
+reg [11:0] counter = 0;
+reg [11:0] pwm_counter[7:0];
+reg [11:0] pwm_duty[7:0];
+reg [2:0] current_led = 0;
+
+integer i;
+
+always @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin
+        counter <= 0;
+        current_led <= 0;
+        for (i = 0; i < 8; i++) begin
+            pwm_duty[i] <= 0;
+        end
+    end 
+    else begin
+        if (counter >= 300) begin
+            counter <= 0;
+            current_led <= (current_led - 1) % 8; // change to next led
+            pwm_duty[current_led] <= 8; 
+            pwm_duty[(current_led + 1) % 8] <= pwm_duty[(current_led + 1) % 8] >= 2 ? pwm_duty[(current_led + 1) % 8] - 2 : 0;
+            pwm_duty[(current_led + 2) % 8] <= pwm_duty[(current_led + 2) % 8] >= 2 ? pwm_duty[(current_led + 2) % 8] - 2 : 0;
+            pwm_duty[(current_led + 3) % 8] <= pwm_duty[(current_led + 3) % 8] >= 2 ? pwm_duty[(current_led + 3) % 8] - 2 : 0;
+            pwm_duty[(current_led + 4) % 8] <= pwm_duty[(current_led + 4) % 8] >= 2 ? pwm_duty[(current_led + 4) % 8] - 2 : 0;
+        end
+        else begin
+            counter <= counter + 1;
+        end
+    end
+end
+
+// PWM OUTPUT
+always @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin
+        for (i = 0; i < 8; i++) begin
+            pwm_counter[i] <= 0;
+        end
+        led_out <= 0;
+    end else begin
+        for (i = 0; i < 8; i++) begin
+            pwm_counter[i] <= pwm_counter[i] >= 8 ? 0 : pwm_counter[i] + 1;
+            led_out[i] <= (pwm_counter[i] < pwm_duty[i]) ? 1 : 0;
+        end
+    end
+end
+
+endmodule
+
 ```
 本模块中创建了1个计数器，8个pwm控制器，1个led选择寄存器。当计数值达到1周期时，将向后led选择寄存器的值，并且减小选中led前方4个pwm控制器的duty，实现渐灭流水灯的效果。
 
@@ -266,15 +639,57 @@ top.v [顶层模块]
 
 ---
 ### `mode4_blink.v` 爆闪灯
-#### 输入：
+#### 代码内容：
 ``` v
-    parameter PERIOD = 2400  //1s BASE PERIOD
+   //爆闪灯驱动
+//create by siman 2024/3/11
+
+module LED_mode4_driver 
+#(
+    parameter PERIOD = 2400 //1s BASE PERIOD
+)
+(
     input clk,
-    input rst_n
-```
-#### 输出：
-``` v
-   output reg [7:0] led_out
+    input rst_n,
+    output reg [7:0] led_out
+);
+    reg [12:0] counter;
+    reg [7:0] led_mask; 
+
+    // Generate the mask for the selected LED
+    always @(posedge clk or negedge rst_n) begin
+        if(~rst_n) begin
+            led_mask = 8'b0;
+        end
+        else begin
+            if (counter <= PERIOD / 2 + 1) begin
+                led_mask = 8'b1111_0000;
+            end
+            else begin
+                led_mask = 8'b0000_1111;
+            end
+        end
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if(~rst_n) begin
+            led_out = 8'b0;
+            counter = 12'd0;
+        end
+        else begin
+            counter = counter + 1;
+            if (counter % (PERIOD / 2 / 6) == 0) begin //CLK: 1200Hz / 6
+                // Toggle the selected LED
+                led_out = led_out ^ led_mask;
+            end
+            if (counter == 2400) begin
+                counter = 12'd0;
+            end
+        end
+    end 
+
+
+endmodule 
 ```
 本模块中创建了1个计数器，1个掩码寄存器，当周期达到1/2时切换掩码。当周期达到1/12的时候将切换掩码对应led的显示模式。
 #### 仿真结果：
