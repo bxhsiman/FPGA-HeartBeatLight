@@ -784,4 +784,4 @@ Design Summary
 TBD
 
 ## 代码源文件
-[Github](https://github.com/bxhsiman/FPGA-HertBeatLight)
+[Github](https://github.com/bxhsiman/FPGA-HeartBeatLight)
