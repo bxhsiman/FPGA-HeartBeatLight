@@ -3,22 +3,22 @@
 
 module LED_mode2_driver
 #(
-    parameter PERIOD = 2400  //1s BASE PERIOD
+    parameter PERIOD = 240000  //1s BASE PERIOD
 )
 (
     input clk,
     input rst_n,
     output reg [7:0] led_out
 );
-    reg [11:0] counter = 0; 
+    reg [31:0] counter = 0; 
     reg [2:0] current_led = 0; 
     
-    reg [11:0] duty;
-    reg [11:0] duty_counter; 
+    reg [31:0] duty;
+    reg [31:0] duty_counter; 
 
     always @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
-            duty = 12'd0;
+            duty = 32'd0;
             counter = 12'd0;
             current_led = 8'd0;
         end
@@ -52,7 +52,7 @@ module LED_mode2_driver
                 end
             end
             else if (counter == PERIOD) begin
-                counter = 12'd0;
+                counter = 32'd0;
                 current_led = current_led + 1;
             end
 
@@ -62,10 +62,10 @@ module LED_mode2_driver
     always @(posedge clk or negedge rst_n) begin
         if(~rst_n)begin
             led_out = 8'b0000_0000;
-            duty_counter = 8'd0;
+            duty_counter = 32'd0;
         end
         else begin
-            duty_counter = duty_counter >= 5 ? 0 : duty_counter + 1;
+            duty_counter = duty_counter >= PERIOD / 8 / 60  ? 0 : duty_counter + 1;
             led_out = (duty_counter <= duty) ? (1 << current_led) : (8'b0000_0000); 
         end
     end

@@ -5,7 +5,7 @@ module clk_divider
 (
     input         clk,
     input         rst_n,
-    input [3:0]   period, // 4'd1: 2400Hz, 4d'2: 1200Hz, 4d'3: 800Hz, 4d'4: 600Hz 
+    input [3:0]   period, // 4'd1: 24000Hz, 4d'2: 12000Hz, 4d'3: 8000Hz, 4d'4: 6000Hz 
     output reg    clk_out
 );
     reg [31:0] counter;
@@ -13,10 +13,10 @@ module clk_divider
 
     // Initialize period values
     initial begin
-        period_values[0] = clk_freq / 2400 / 2;
-        period_values[1] = clk_freq / 1200 / 2;
-        period_values[2] = clk_freq / 800 / 2;
-        period_values[3] = clk_freq / 600 / 2;
+        period_values[0] = clk_freq / 240000 / 2;
+        period_values[1] = clk_freq / 120000 / 2;
+        period_values[2] = clk_freq / 80000 / 2;
+        period_values[3] = clk_freq / 60000 / 2;
     end
 
     always @(posedge clk or negedge rst_n) begin

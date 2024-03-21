@@ -3,7 +3,7 @@
 
 module LED_mode1_driver 
 #(
-    parameter PERIOD = 2400  //1s BASE PERIOD
+    parameter PERIOD = 240000  //1s BASE PERIOD
 ) 
 (
     input clk,
@@ -11,12 +11,12 @@ module LED_mode1_driver
     output reg [7:0] led_out
 );
 
-    reg [11:0] counter = 0; 
+    reg [31:0] counter = 0; 
     reg [2:0] current_led = 0;
 
     always @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
-            counter <= 10'd0;
+            counter <= 32'd0;
             current_led <= 8'd0;
             led_out <= 8'b0000_0000; 
         end
@@ -38,7 +38,7 @@ module LED_mode1_driver
                 counter <= counter + 1;
             end
             else begin
-                counter <= 10'd0;
+                counter <= 32'd0;
                 current_led <= current_led + 1;
                 if (current_led >= 7) begin
                     current_led <= 8'd0;

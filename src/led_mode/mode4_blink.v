@@ -3,14 +3,14 @@
 
 module LED_mode4_driver 
 #(
-    parameter PERIOD = 2400 //1s BASE PERIOD
+    parameter PERIOD = 240000 //1s BASE PERIOD
 )
 (
     input clk,
     input rst_n,
     output reg [7:0] led_out
 );
-    reg [12:0] counter;
+    reg [31:0] counter;
     reg [7:0] led_mask; 
 
     // Generate the mask for the selected LED
@@ -31,7 +31,7 @@ module LED_mode4_driver
     always @(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
             led_out = 8'b0;
-            counter = 12'd0;
+            counter = 32'd0;
         end
         else begin
             counter = counter + 1;
@@ -39,8 +39,8 @@ module LED_mode4_driver
                 // Toggle the selected LED
                 led_out = led_out ^ led_mask;
             end
-            if (counter == 2400) begin
-                counter = 12'd0;
+            if (counter == PERIOD) begin
+                counter = 32'd0;
             end
         end
     end 
