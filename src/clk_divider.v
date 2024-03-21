@@ -5,7 +5,7 @@ module clk_divider
 (
     input         clk,
     input         rst_n,
-    input [3:0]   period, // 4'd1: 24000Hz, 4d'2: 12000Hz, 4d'3: 8000Hz, 4d'4: 6000Hz 
+    input [3:0]   period, // 4'd1: 240000Hz, 4d'2: 120000Hz, 4d'3: 80000Hz, 4d'4: 600000Hz 
     output reg    clk_out
 );
     reg [31:0] counter;

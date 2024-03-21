@@ -49,7 +49,7 @@
 4. LED驱动模块将分为四个子模块，分别实现上述的四个功能：
    1. **循环心跳灯**：输入时钟的一半时间输出高，一半时间输出低。
    2. **呼吸灯**: 实现一个PWM生成器，输入时钟前一半时间每一次电平反转阈值+1，后一半时间每一次电平反转阈值-1。
-   3. **带熄灭功能的流水灯**：实现8个PWM生成器，反转阈值分为4档(0,25,59,75,100)，状态机每切换一个，当前PWM生成器反转阈值设为100，前面所有的反转阈值减小一档。【拖3个尾巴】
+   3. **带熄灭功能的流水灯**：实现8个PWM生成器，生成一个状态机控制当前选择的灯珠，将当前选择灯珠的PWM Duty设置为100，其余灯珠依次减小。
    4. **爆闪灯**：将灯分为两组，输入时钟进行2分频用于选择灯组，再6分频用于点亮熄灭灯组。
 ### 数码管显示模块
 实现一个译码器，显示当前模式选择寄存器与周期选择寄存器的信息，如果有效则显示有效值，如果无效显示提示。
@@ -84,7 +84,7 @@ module clk_divider
 (
     input         clk,
     input         rst_n,
-    input [3:0]   period, // 4'd1: 2400Hz, 4d'2: 1200Hz, 4d'3: 800Hz, 4d'4: 600Hz 
+    input [3:0]   period, // 4'd1: 240000Hz, 4d'2: 120000Hz, 4d'3: 80000Hz, 4d'4: 60000Hz 
     output reg    clk_out
 );
     reg [31:0] counter;
@@ -92,10 +92,10 @@ module clk_divider
 
     // Initialize period values
     initial begin
-        period_values[0] = clk_freq / 2400 / 2;
-        period_values[1] = clk_freq / 1200 / 2;
-        period_values[2] = clk_freq / 800 / 2;
-        period_values[3] = clk_freq / 600 / 2;
+        period_values[0] = clk_freq / 240000 / 2;
+        period_values[1] = clk_freq / 120000 / 2;
+        period_values[2] = clk_freq / 80000 / 2;
+        period_values[3] = clk_freq / 60000 / 2;
     end
 
     always @(posedge clk or negedge rst_n) begin
@@ -348,7 +348,7 @@ endmodule
 ### `seg.v` 数码管译码器
 #### 代码内容：
 ``` v
-   //段码屏译码模块
+//段码屏译码模块
 //by ChatGpt 2024/2/06
 module seg_display (
     input clk,
@@ -419,12 +419,12 @@ endmodule
 ### `mode1_heart_beat.v` 心跳灯
 #### 代码内容：
 ``` v
-    //心跳灯驱动
+//心跳灯驱动
 // Created by siman 2024/3/11
 
 module LED_mode1_driver 
 #(
-    parameter PERIOD = 2400  //1s BASE PERIOD
+    parameter PERIOD = 240000  //1s BASE PERIOD
 ) 
 (
     input clk,
@@ -432,12 +432,12 @@ module LED_mode1_driver
     output reg [7:0] led_out
 );
 
-    reg [11:0] counter = 0; 
+    reg [31:0] counter = 0; 
     reg [2:0] current_led = 0;
 
     always @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
-            counter <= 10'd0;
+            counter <= 32'd0;
             current_led <= 8'd0;
             led_out <= 8'b0000_0000; 
         end
@@ -459,7 +459,7 @@ module LED_mode1_driver
                 counter <= counter + 1;
             end
             else begin
-                counter <= 10'd0;
+                counter <= 32'd0;
                 current_led <= current_led + 1;
                 if (current_led >= 7) begin
                     current_led <= 8'd0;
@@ -480,27 +480,27 @@ endmodule
 ### `mode2_breath.v` 呼吸灯
 #### 代码内容：
 ``` v
-    //呼吸灯驱动
+//呼吸灯驱动
 //create by siman 2024/3/11
 
 module LED_mode2_driver
 #(
-    parameter PERIOD = 2400  //1s BASE PERIOD
+    parameter PERIOD = 240000  //1s BASE PERIOD
 )
 (
     input clk,
     input rst_n,
     output reg [7:0] led_out
 );
-    reg [11:0] counter = 0; 
+    reg [31:0] counter = 0; 
     reg [2:0] current_led = 0; 
     
-    reg [11:0] duty;
-    reg [11:0] duty_counter; 
+    reg [31:0] duty;
+    reg [31:0] duty_counter; 
 
     always @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
-            duty = 12'd0;
+            duty = 32'd0;
             counter = 12'd0;
             current_led = 8'd0;
         end
@@ -534,7 +534,7 @@ module LED_mode2_driver
                 end
             end
             else if (counter == PERIOD) begin
-                counter = 12'd0;
+                counter = 32'd0;
                 current_led = current_led + 1;
             end
 
@@ -544,10 +544,10 @@ module LED_mode2_driver
     always @(posedge clk or negedge rst_n) begin
         if(~rst_n)begin
             led_out = 8'b0000_0000;
-            duty_counter = 8'd0;
+            duty_counter = 32'd0;
         end
         else begin
-            duty_counter = duty_counter >= 5 ? 0 : duty_counter + 1;
+            duty_counter = duty_counter >= PERIOD / 8 / 60  ? 0 : duty_counter + 1;
             led_out = (duty_counter <= duty) ? (1 << current_led) : (8'b0000_0000); 
         end
     end
@@ -569,15 +569,15 @@ endmodule
 ### `mode3_water_flow.v` 流水灯
 #### 代码内容：
 ``` v
-   module LED_mode3_driver(
+module LED_mode3_driver(
     input clk,
     input rst_n,
     output reg [7:0] led_out
 );
 
-reg [11:0] counter = 0;
-reg [11:0] pwm_counter[7:0];
-reg [11:0] pwm_duty[7:0];
+reg [31:0] counter = 0;
+reg [31:0] pwm_counter[7:0];
+reg [31:0] pwm_duty[7:0];
 reg [2:0] current_led = 0;
 
 integer i;
@@ -591,14 +591,17 @@ always @(posedge clk or negedge rst_n) begin
         end
     end 
     else begin
-        if (counter >= 300) begin
+        if (counter >= 30000) begin
             counter <= 0;
             current_led <= (current_led - 1) % 8; // change to next led
-            pwm_duty[current_led] <= 8; 
-            pwm_duty[(current_led + 1) % 8] <= pwm_duty[(current_led + 1) % 8] >= 2 ? pwm_duty[(current_led + 1) % 8] - 2 : 0;
-            pwm_duty[(current_led + 2) % 8] <= pwm_duty[(current_led + 2) % 8] >= 2 ? pwm_duty[(current_led + 2) % 8] - 2 : 0;
-            pwm_duty[(current_led + 3) % 8] <= pwm_duty[(current_led + 3) % 8] >= 2 ? pwm_duty[(current_led + 3) % 8] - 2 : 0;
-            pwm_duty[(current_led + 4) % 8] <= pwm_duty[(current_led + 4) % 8] >= 2 ? pwm_duty[(current_led + 4) % 8] - 2 : 0;
+            pwm_duty[current_led] <= 900; 
+            pwm_duty[(current_led + 1) % 8] <= pwm_duty[(current_led + 1) % 8] > 50 ? pwm_duty[(current_led + 1) % 8] - 250 : 0;
+            pwm_duty[(current_led + 2) % 8] <= pwm_duty[(current_led + 2) % 8] > 50 ? pwm_duty[(current_led + 2) % 8] - 250 : 0;
+            pwm_duty[(current_led + 3) % 8] <= pwm_duty[(current_led + 3) % 8] > 50 ? pwm_duty[(current_led + 3) % 8] - 100 : 0;
+            pwm_duty[(current_led + 4) % 8] <= pwm_duty[(current_led + 4) % 8] > 50 ? pwm_duty[(current_led + 4) % 8] - 100 : 0;
+            pwm_duty[(current_led + 5) % 8] <= pwm_duty[(current_led + 5) % 8] > 50 ? pwm_duty[(current_led + 5) % 8] - 50 : 0;
+            pwm_duty[(current_led + 6) % 8] <= pwm_duty[(current_led + 6) % 8] > 50 ? pwm_duty[(current_led + 6) % 8] - 50 : 0;
+            pwm_duty[(current_led + 7) % 8] <= pwm_duty[(current_led + 7) % 8] > 50 ? pwm_duty[(current_led + 7) % 8] - 50 : 0;
         end
         else begin
             counter <= counter + 1;
@@ -615,7 +618,7 @@ always @(posedge clk or negedge rst_n) begin
         led_out <= 0;
     end else begin
         for (i = 0; i < 8; i++) begin
-            pwm_counter[i] <= pwm_counter[i] >= 8 ? 0 : pwm_counter[i] + 1;
+            pwm_counter[i] <= pwm_counter[i] >= 900 ? 0 : pwm_counter[i] + 1;
             led_out[i] <= (pwm_counter[i] < pwm_duty[i]) ? 1 : 0;
         end
     end
@@ -624,7 +627,7 @@ end
 endmodule
 
 ```
-本模块中创建了1个计数器，8个pwm控制器，1个led选择寄存器。当计数值达到1周期时，将向后led选择寄存器的值，并且减小选中led前方4个pwm控制器的duty，实现渐灭流水灯的效果。
+本模块中创建了1个计数器，8个pwm控制器，1个led选择寄存器。当计数值达到1周期时，将向后led选择寄存器的值，并且减小选中led前方7个pwm控制器的duty，实现渐灭流水灯的效果。
 
 #### 仿真结果：
 **整体波形**
@@ -641,19 +644,19 @@ endmodule
 ### `mode4_blink.v` 爆闪灯
 #### 代码内容：
 ``` v
-   //爆闪灯驱动
+//爆闪灯驱动
 //create by siman 2024/3/11
 
 module LED_mode4_driver 
 #(
-    parameter PERIOD = 2400 //1s BASE PERIOD
+    parameter PERIOD = 240000 //1s BASE PERIOD
 )
 (
     input clk,
     input rst_n,
     output reg [7:0] led_out
 );
-    reg [12:0] counter;
+    reg [31:0] counter;
     reg [7:0] led_mask; 
 
     // Generate the mask for the selected LED
@@ -674,7 +677,7 @@ module LED_mode4_driver
     always @(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
             led_out = 8'b0;
-            counter = 12'd0;
+            counter = 32'd0;
         end
         else begin
             counter = counter + 1;
@@ -682,14 +685,14 @@ module LED_mode4_driver
                 // Toggle the selected LED
                 led_out = led_out ^ led_mask;
             end
-            if (counter == 2400) begin
-                counter = 12'd0;
+            if (counter == PERIOD) begin
+                counter = 32'd0;
             end
         end
     end 
 
 
-endmodule 
+endmodule  
 ```
 本模块中创建了1个计数器，1个掩码寄存器，当周期达到1/2时切换掩码。当周期达到1/12的时候将切换掩码对应led的显示模式。
 #### 仿真结果：
@@ -785,3 +788,16 @@ Design Summary
 
 ## 代码源文件
 [Github](https://github.com/bxhsiman/FPGA-HeartBeatLight)
+
+
+## 未来的计划与建议
+在本次项目中我从小脚丫FPGA开始真正入门了FPGA开发，也意识到Verilog这种硬件描述语言与C等编程语言存在着彻底的差异。本项目中仍有很多嵌入式写法的代码造成资源浪费，希望未来能加以规避，真正学会FPGA。
+感谢小脚丫与电子森林提供的机会，也希望你们越做越好！
+
+
+(小脚丫的在线IDE十分方便，就是bug实在太多，比如管脚约束页内容时不时消失，填写管脚分配时如果填错，删除对应管脚后无法再选择... 建议做成在线可写的约束文档。在线实现的功能也有bug，lattice Diamond 离线可综合可实现的结构在线会报错，这也是本次项目后期没有使用在线IDE的原因。)
+## 开发环境介绍
+
+- IDE-Lattice Diamond
+- Editor-VScode
+- 仿真与波形显示-iverlog+GTKWave
